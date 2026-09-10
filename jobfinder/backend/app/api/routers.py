@@ -4,12 +4,155 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from typing import Optional
 from datetime import datetime
 import uuid
+import asyncio
+import os
 from app.api.dto import (
     StartRunRequest, StartRunResponse, RunDTO, JobDTO, JobsListDTO,
     DashboardDTO, CompanyDTO, DeepVerifyRequest, DeepVerifyResponse
 )
-from app.storage.repository import RunRepository, JobRepository, CompanyRepository
+from app.storage.repository import (
+    RunRepository, JobRepository, CompanyRepository, ApplicationStatusRepository
+)
 from app.storage.models import RunStatus, JobStatus, Run
+from app.storage.excel_io import ApplicationHistory, SkillsProfile
+from app.ai import get_ai_provider
+from app.tasks.run_context import RunContext
+from app.tasks.task1 import Task1Orchestrator
+from app.tasks.task2 import Task2Orchestrator
+from app.tasks.batch_manager import CompanyBatchManager
+from app.coverage.tracker import CoverageTracker
+from app.coverage.retry import RetryManager
+from app.dedup.engine import DedupEngine
+from app.applications.gate import ApplicationGate
+from app.config.loader import ConfigLoader
+
+
+class _RunRepositoryWrapper:
+    """Wrapper that adapts orchestrator's interface to RunRepository."""
+
+    def update(self, run_id: str, **kwargs):
+        """Update run with keyword arguments."""
+        run = RunRepository.get_by_id(run_id)
+        if not run:
+            return
+
+        # Update fields from kwargs
+        if "status" in kwargs:
+            run.status = RunStatus(kwargs["status"]) if isinstance(kwargs["status"], str) else kwargs["status"]
+        if "total_planned" in kwargs:
+            run.total_planned = kwargs["total_planned"]
+        if "total_processed" in kwargs:
+            run.total_processed = kwargs["total_processed"]
+        if "total_jobs_found" in kwargs:
+            run.total_jobs_found = kwargs["total_jobs_found"]
+        if "total_duplicates" in kwargs:
+            run.total_duplicates = kwargs["total_duplicates"]
+        if "total_already_applied" in kwargs:
+            run.total_already_applied = kwargs["total_already_applied"]
+        if "total_errors" in kwargs:
+            run.total_errors = kwargs["total_errors"]
+        if "error_message" in kwargs:
+            run.error_message = kwargs["error_message"]
+
+        RunRepository.update(run)
+
+
+def _load_config_data():
+    """Load configuration data into repositories."""
+    # Try to load from project config directory
+    config_dirs = ["../config", "../../config", "config"]
+    loader = None
+
+    for config_dir in config_dirs:
+        try:
+            loader = ConfigLoader(config_dir)
+            loader.load_all()
+            break
+        except FileNotFoundError:
+            continue
+
+    if loader:
+        company_repo = CompanyRepository()
+        for company in loader.companies:
+            # Skip if already exists
+            if not company_repo.get_by_id(company.company_id):
+                company_repo.create(company)
+
+
+def _build_run_context(run_id: str, task: str) -> RunContext:
+    """Build a RunContext with all required dependencies."""
+    return RunContext(
+        run_id=run_id,
+        task=task,
+        company_repo=CompanyRepository(),
+        job_repo=JobRepository(),
+        run_repo=_RunRepositoryWrapper(),
+        app_status_repo=ApplicationStatusRepository(),
+        application_history=ApplicationHistory(
+            os.path.join(os.getcwd(), "job_applications_master.xlsx")
+        ),
+        skills_profile=SkillsProfile(
+            os.path.join(os.getcwd(), "skills_profile.xlsx")
+        ),
+        ai_provider=get_ai_provider(),
+        coverage_tracker=CoverageTracker(run_id, task),
+        retry_manager=RetryManager(run_id),
+        dedup_engine=DedupEngine(),
+        application_gate=ApplicationGate(),
+    )
+
+
+async def _execute_task1(run_id: str):
+    """Execute Task 1 in the background."""
+    try:
+        # Load config data first
+        _load_config_data()
+
+        context = _build_run_context(run_id, "task1")
+
+        # Update status to IN_PROGRESS
+        run = RunRepository.get_by_id(run_id)
+        if run:
+            run.status = RunStatus.IN_PROGRESS
+            RunRepository.update(run)
+
+        # Execute orchestrator
+        batch_manager = CompanyBatchManager(context.company_repo)
+        orchestrator = Task1Orchestrator(context, batch_manager)
+        await orchestrator.run()
+    except Exception as e:
+        print(f"Error in Task 1 (run {run_id}): {e}")
+        run = RunRepository.get_by_id(run_id)
+        if run:
+            run.status = RunStatus.FAILED
+            run.error_message = str(e)
+            RunRepository.update(run)
+
+
+async def _execute_task2(run_id: str):
+    """Execute Task 2 in the background."""
+    try:
+        # Load config data first
+        _load_config_data()
+
+        context = _build_run_context(run_id, "task2")
+
+        # Update status to IN_PROGRESS
+        run = RunRepository.get_by_id(run_id)
+        if run:
+            run.status = RunStatus.IN_PROGRESS
+            RunRepository.update(run)
+
+        # Execute orchestrator
+        orchestrator = Task2Orchestrator(context)
+        await orchestrator.run()
+    except Exception as e:
+        print(f"Error in Task 2 (run {run_id}): {e}")
+        run = RunRepository.get_by_id(run_id)
+        if run:
+            run.status = RunStatus.FAILED
+            run.error_message = str(e)
+            RunRepository.update(run)
 
 
 class RunRouter:
@@ -26,7 +169,8 @@ class RunRouter:
             run_id = str(uuid.uuid4())
             run = Run(run_id=run_id, task="task1", status=RunStatus.PENDING)
             RunRepository.create(run)
-            # TODO: would call Task1Orchestrator in background
+            # Schedule background execution
+            background_tasks.add_task(_execute_task1, run_id)
             return StartRunResponse(
                 run_id=run_id,
                 task="task1",
@@ -40,7 +184,8 @@ class RunRouter:
             run_id = str(uuid.uuid4())
             run = Run(run_id=run_id, task="task2", status=RunStatus.PENDING)
             RunRepository.create(run)
-            # TODO: would call Task2Orchestrator in background
+            # Schedule background execution
+            background_tasks.add_task(_execute_task2, run_id)
             return StartRunResponse(
                 run_id=run_id,
                 task="task2",
