@@ -1,11 +1,11 @@
 # MVP Development Progress Summary
 
-## Current Status: 55% Complete (6 of 11 Phases)
+## Current Status: 64% Complete (7 of 11 Phases)
 
-**Last Updated**: 2026-09-10  
-**Session Commits**: 7 major phases + architecture diagram  
-**Tests Passing**: 122/122 (100%)  
-**Token Efficiency**: Ready for fresh session
+**Last Updated**: 2026-09-10 (Session 2)  
+**Session Commits**: 8 major phases + architecture diagram  
+**Tests Passing**: 165/165 (100%)  
+**MVP Progress**: Web infrastructure complete, orchestrators next
 
 ---
 
@@ -52,6 +52,15 @@
 - External prompts (query_expansion.md template)
 - 26 tests: schema validation, FakeProvider all methods, JSON serialization
 
+### ✅ Phase 6 — Search/Fetch Engine + ATS Adapters
+- WebFetcher: Playwright (JS rendering) + httpx (fast) + BeautifulSoup parsing
+  Rate limiting, URL validation, text extraction, async context manager
+- QueryBuilder: AI-powered keyword expansion, semantic variations, graceful fallback
+- 4 MVP ATS Adapters: Greenhouse, Lever, Comeet, Generic Careers Page
+  - Each implements search (query→URLs) and extract (URL→JobExtractionResult via AI)
+  - Fixture HTML samples (careers pages + job detail) for testing
+- 43 tests: URL validation, HTML parsing, keyword expansion, rate limiting, adapter contracts
+
 ### ✅ Architecture Diagram
 - Interactive Mermaid visualization
 - System layers, data flow, Code/AI boundary
@@ -69,27 +78,23 @@
 | 3 | Dedup | 43 | ✅ |
 | 4 | App Gate | 15 | ✅ |
 | 5 | AI | 26 | ✅ |
-| **TOTAL** | | **122** | **✅ 100%** |
+| 6 | Search/ATS | 43 | ✅ |
+| **TOTAL** | | **165** | **✅ 100%** |
 
 ---
 
-## Next Phase: Phase 6 — Search/Fetch Engine + ATS Adapters
+## Next Phase: Phase 7 — Coverage, Retry State, Discovery Ledger (MVP-basic)
 
-**Scope** (not yet started):
-- `backend/app/search/fetcher.py` — Playwright + httpx + BeautifulSoup
-- `backend/app/search/query_builder.py` — build search queries from keywords
-- `backend/app/ats/base.py` — adapter interface
-- `backend/app/ats/greenhouse.py` — Greenhouse ATS adapter
-- `backend/app/ats/lever.py` — Lever ATS adapter
-- `backend/app/ats/comeet.py` — Comeet ATS adapter
-- `backend/app/ats/generic.py` — Generic careers page adapter
-- Fixture tests with saved HTML samples
+**Scope**:
+- Coverage Tracker: tracks units planned/processed, jobs found, duplicates, already-applied, errors
+- Retry Manager (basic): state persisted per company/source/page for partial failure recovery
+- Discovery Ledger (extended from Phase 2): first_found/verified/status tracking per job
+- Run persistence: link all activity back to a Run for atomicity and traceability
 
-**Why pause here**:
-- Phase 6 is substantial (web scraping, multiple adapters)
-- Requires careful test fixture setup
-- Full token budget needed for implementation + comprehensive tests
-- Current session has built perfect foundation; fresh session = clean slate
+**Key design**:
+- Full "5 targeted retries" continuation logic deferred to V1 (Appendix B.3)
+- State machine: Run → WorkUnit (company/source/page) → Job → Outcome
+- Prevents erasure of prior progress on source failure (e.g., B fails after A succeeds)
 
 ---
 
@@ -136,14 +141,15 @@
 
 ---
 
-## Session Statistics
+## Session Statistics (Session 2)
 
-- **Commits**: 7 major feature commits
-- **Files Created**: ~50 Python modules + tests
-- **Lines of Code**: ~3500 (backend modules + tests)
-- **Test Execution Time**: 4.30s for full 122-test suite
+- **Commits**: 8 major feature commits total (7 previous + Phase 6)
+- **Phase 6 Files**: 10 adapters/fetcher/builder + 3 test files + 8 fixture HTMLs
+- **Lines of Code**: ~4500 total (added ~1500 in Phase 6)
+- **Test Execution Time**: 5.20s for full 165-test suite
+- **Test Coverage**: 43 new tests, 100% pass rate
 - **Git Size**: Clean, focused commits with clear messages
 
 ---
 
-**Status**: Ready to continue. All foundation work complete. Phase 6 awaits.
+**Status**: Phase 6 complete. Infrastructure ready. Phase 7 (Coverage/Retry) next.
