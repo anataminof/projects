@@ -9,7 +9,7 @@ from app.api.dto import (
     DashboardDTO, CompanyDTO, DeepVerifyRequest, DeepVerifyResponse
 )
 from app.storage.repository import RunRepository, JobRepository, CompanyRepository
-from app.storage.models import RunStatus, JobStatus
+from app.storage.models import RunStatus, JobStatus, Run
 
 
 class RunRouter:
@@ -24,8 +24,9 @@ class RunRouter:
         async def start_task1(req: StartRunRequest, background_tasks: BackgroundTasks):
             """Start Task 1 (cyclic company coverage)."""
             run_id = str(uuid.uuid4())
-            # Create run record
-            # Stub: would call Task1Orchestrator in background
+            run = Run(run_id=run_id, task="task1", status=RunStatus.PENDING)
+            RunRepository.create(run)
+            # TODO: would call Task1Orchestrator in background
             return StartRunResponse(
                 run_id=run_id,
                 task="task1",
@@ -37,8 +38,9 @@ class RunRouter:
         async def start_task2(req: StartRunRequest, background_tasks: BackgroundTasks):
             """Start Task 2 (open-web discovery)."""
             run_id = str(uuid.uuid4())
-            # Create run record
-            # Stub: would call Task2Orchestrator in background
+            run = Run(run_id=run_id, task="task2", status=RunStatus.PENDING)
+            RunRepository.create(run)
+            # TODO: would call Task2Orchestrator in background
             return StartRunResponse(
                 run_id=run_id,
                 task="task2",
