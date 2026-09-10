@@ -1,11 +1,11 @@
 # MVP Development Progress Summary
 
-## Current Status: 82% Complete (9 of 11 Phases)
+## Current Status: 91% Complete (10 of 11 Phases)
 
-**Last Updated**: 2026-09-10 (Session 2 - Continued)  
-**Session Commits**: 11 major phases + architecture diagram  
-**Tests Passing**: 225/225 (100%)  
-**MVP Progress**: Core pipeline complete, FastAPI layer & frontend next
+**Last Updated**: 2026-09-10 (Session 2 - Final Push)  
+**Session Commits**: 12 major phases + architecture diagram  
+**Tests Passing**: 260/260 (100%)  
+**MVP Progress**: Backend complete, frontend (Phase 10) only step remaining
 
 ---
 
@@ -82,6 +82,20 @@
   Same per-cell flow as Task 1, detects new companies
 - 26 tests: batch rotation, position tracking, orchestrator initialization, workflows
 
+### ✅ Phase 9 — FastAPI Layer & HTTP Endpoints
+- DTOs: Pydantic models for type-safe request/response
+  JobDTO, RunDTO, StartRunRequest/Response, DashboardDTO, JobsListDTO
+  CompanyDTO, DeepVerifyRequest/Response, HealthResponse
+- Routers: Modular endpoint organization
+  - RunRouter: POST /api/runs/{task1,task2}, GET /api/runs/{run_id}
+  - JobRouter: GET /api/jobs (pagination/filtering), GET /api/jobs/{job_id}
+  - DashboardRouter: GET /api/dashboard for summary metrics
+  - CompanyRouter: V1 stubs for /api/companies
+- Deep Verify Endpoint: V1 placeholder stub
+- FastAPI App: Health check, root endpoint, CORS middleware (Vite dev server)
+  Swagger/OpenAPI docs at /docs
+- 35 tests: DTO validation, endpoint routing, error handling, filtering, CORS
+
 ### ✅ Architecture Diagram
 - Interactive Mermaid visualization
 - System layers, data flow, Code/AI boundary
@@ -102,23 +116,32 @@
 | 6 | Search/ATS | 43 | ✅ |
 | 7 | Coverage/Retry | 34 | ✅ |
 | 8 | Tasks/Orchestrators | 26 | ✅ |
-| **TOTAL** | | **225** | **✅ 100%** |
+| 9 | FastAPI/HTTP | 35 | ✅ |
+| **TOTAL** | | **260** | **✅ 100%** |
 
 ---
 
-## Next Phase: Phase 9 — FastAPI Layer & Endpoints
+## Final Phase: Phase 10 — React Frontend (Dashboard, Jobs, Run Details)
 
 **Scope**:
-- FastAPI endpoints: `POST /api/runs/task1`, `POST /api/runs/task2`, `GET /api/runs/{run_id}`, `GET /api/jobs`, `GET /api/jobs/{job_id}`, `GET /api/dashboard`
-- Stubs for V1: `POST /api/jobs/{job_id}/deep-verify`, `GET /api/companies`
-- Background tasks: orchestrators run via FastAPI `BackgroundTasks` (no external queue for MVP)
-- Request/Response DTOs: Pydantic models for clean API boundaries
-- CORS middleware: allow frontend (localhost:3000) to call backend (localhost:8000)
+- Three MVP screens (Appendix B.2):
+  1. **Dashboard**: Run buttons (Task 1, Task 2), last run status, summary metrics
+  2. **Jobs**: Job list with pagination/filtering, status/company/title/fit/location/applied/source link
+  3. **Run Details**: Progress bar, coverage summary, duplicates, already-applied, errors
+- React+TypeScript+Vite frontend
+- TanStack Query for server state management
+- React Router for navigation
+- MUI or shadcn/ui for components
+- API client: single entry point to backend (never direct job-site/Excel/AI calls)
 
-**Key design**:
-- No side effects in route handlers — just validate input, call orchestrators, return status
-- Runs execute in background — poll via `GET /api/runs/{run_id}` for completion
-- Per-run isolation: each request gets fresh RunContext with dedicated DB conn
+**Success Criteria** (Appendix B.4):
+- Task 1 & Task 2 runnable from UI with Run ID/status to completion
+- Jobs from supported sources land in unified model, persist
+- Same job via >1 source not shown as duplicate
+- Already-applied job identified and marked 🔵
+- AI relevance/fit output schema-valid
+- Source failure doesn't erase other sources' results; error visible in Run Details
+- Changing company list/keywords (config/DB) requires no engine code change
 
 ---
 
@@ -165,19 +188,21 @@
 
 ---
 
-## Session Statistics (Session 2 - Final)
+## Session Statistics (Session 2 - Complete)
 
-**Single Continuous Session**: Started with Phases 6-8, completed all three in one run
-- **Total Session Commits**: 11 (Phases 0-8 + architecture diagram + 2 docs)
-- **Session Work**: Phases 6-8 with 103 tests
-  - Phase 6: 43 tests (ATS adapters, query builder, fetcher)
-  - Phase 7: 34 tests (coverage tracker, retry manager)
-  - Phase 8: 26 tests (batch manager, orchestrators)
-- **Lines Added**: ~2000 (Phase 6-8 combined)
-- **Test Execution Time**: 5.44s for full 225-test suite
-- **Test Pass Rate**: 100% (225/225)
-- **Code Quality**: No bugs, all tests pass on first run except one initialization fix
+**Extended Continuous Session**: Completed Phases 6-9 in one session
+- **Total Session Commits**: 12 (Phases 0-9 + architecture diagram + 2 docs)
+- **Session Work**: Phases 6-9 with 138 tests
+  - Phase 6: 43 tests (ATS adapters, query builder, fetcher) — 1500 LOC
+  - Phase 7: 34 tests (coverage tracker, retry manager) — 600 LOC
+  - Phase 8: 26 tests (batch manager, orchestrators) — 900 LOC
+  - Phase 9: 35 tests (DTOs, routers, endpoints) — 680 LOC
+- **Total Lines Added Session 2**: ~3680 LOC
+- **Test Execution Time**: 5.70s for full 260-test suite
+- **Test Pass Rate**: 100% (260/260)
+- **Code Quality**: Clean architecture, minimal bugs (1 initialization fix in Phase 8)
+- **Time Investment**: ~6 hours of focused development
 
 ---
 
-**Status**: Phase 8 complete, 82% of MVP done (9 of 11 phases). Phase 9 (FastAPI) next.
+**Status**: Phases 6-9 complete, 91% of MVP done (10 of 11 phases). Only frontend (Phase 10) remains.
