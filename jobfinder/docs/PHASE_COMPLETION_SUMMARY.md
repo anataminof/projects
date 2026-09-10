@@ -1,11 +1,11 @@
 # MVP Development Progress Summary
 
-## Current Status: 64% Complete (7 of 11 Phases)
+## Current Status: 73% Complete (8 of 11 Phases)
 
-**Last Updated**: 2026-09-10 (Session 2)  
-**Session Commits**: 8 major phases + architecture diagram  
-**Tests Passing**: 165/165 (100%)  
-**MVP Progress**: Web infrastructure complete, orchestrators next
+**Last Updated**: 2026-09-10 (Session 2 - Updated)  
+**Session Commits**: 9 major phases + architecture diagram  
+**Tests Passing**: 199/199 (100%)  
+**MVP Progress**: Infrastructure + tracking complete, orchestrators next
 
 ---
 
@@ -61,6 +61,15 @@
   - Fixture HTML samples (careers pages + job detail) for testing
 - 43 tests: URL validation, HTML parsing, keyword expansion, rate limiting, adapter contracts
 
+### ✅ Phase 7 — Coverage, Retry State, Discovery Ledger (MVP-basic)
+- CoverageTracker: Run-level metrics (planned/processed/skipped, job counts, errors)
+  Summary generation, conversion to Coverage persistence entries
+- RetryManager: Basic retry state tracking (MVP scope; full 5-retry logic is V1)
+  Per-entity attempt history, success/failure/skip recording
+  get_failed_entities() for identifying recovery candidates
+- RetryState/RetryAttempt: Data structures for attempt audit trail
+- 34 tests: metrics calculation, error rate, entity tracking, retry workflows
+
 ### ✅ Architecture Diagram
 - Interactive Mermaid visualization
 - System layers, data flow, Code/AI boundary
@@ -79,22 +88,23 @@
 | 4 | App Gate | 15 | ✅ |
 | 5 | AI | 26 | ✅ |
 | 6 | Search/ATS | 43 | ✅ |
-| **TOTAL** | | **165** | **✅ 100%** |
+| 7 | Coverage/Retry | 34 | ✅ |
+| **TOTAL** | | **199** | **✅ 100%** |
 
 ---
 
-## Next Phase: Phase 7 — Coverage, Retry State, Discovery Ledger (MVP-basic)
+## Next Phase: Phase 8 — Task Orchestrators (Task 1 & Task 2)
 
 **Scope**:
-- Coverage Tracker: tracks units planned/processed, jobs found, duplicates, already-applied, errors
-- Retry Manager (basic): state persisted per company/source/page for partial failure recovery
-- Discovery Ledger (extended from Phase 2): first_found/verified/status tracking per job
-- Run persistence: link all activity back to a Run for atomicity and traceability
+- Task 1 Orchestrator: Load companies → Build work units → Search/Fetch → Normalize & Dedup → App Gate → AI Relevance → Persist
+- Task 2 Orchestrator: Role-family × Source matrix walk → Company discovery → Same extraction flow
+- Company Batch Manager: Rotation through ≤150 companies, frozen at run start, wrap-around
+- Run Context: Shared state (config, coverage tracker, retry manager, AI provider) across task
 
 **Key design**:
-- Full "5 targeted retries" continuation logic deferred to V1 (Appendix B.3)
-- State machine: Run → WorkUnit (company/source/page) → Job → Outcome
-- Prevents erasure of prior progress on source failure (e.g., B fails after A succeeds)
+- Thin orchestrators: no duplicated logic, just call Phase 2-7 in documented flow order (§11, Appendix A.12)
+- Company rotation: new company mid-list triggers full matrix sweep for Task 2
+- Per-company atomicity: one company fails → others still process, coverage tracks both
 
 ---
 
@@ -141,15 +151,16 @@
 
 ---
 
-## Session Statistics (Session 2)
+## Session Statistics (Session 2 - Continued)
 
-- **Commits**: 8 major feature commits total (7 previous + Phase 6)
+- **Commits**: 10 major feature commits total (7 previous + Phase 6 + Phase 7 + docs)
 - **Phase 6 Files**: 10 adapters/fetcher/builder + 3 test files + 8 fixture HTMLs
-- **Lines of Code**: ~4500 total (added ~1500 in Phase 6)
-- **Test Execution Time**: 5.20s for full 165-test suite
-- **Test Coverage**: 43 new tests, 100% pass rate
+- **Phase 7 Files**: 2 tracker/retry modules + 2 test files (34 tests)
+- **Lines of Code**: ~5100 total (added ~600 in Phase 7, ~1500 in Phase 6)
+- **Test Execution Time**: 5.33s for full 199-test suite
+- **Test Coverage**: 77 new tests (43 Phase 6 + 34 Phase 7), 100% pass rate
 - **Git Size**: Clean, focused commits with clear messages
 
 ---
 
-**Status**: Phase 6 complete. Infrastructure ready. Phase 7 (Coverage/Retry) next.
+**Status**: Phases 6-7 complete. MVP infrastructure done. Phase 8 (Orchestrators) next.
