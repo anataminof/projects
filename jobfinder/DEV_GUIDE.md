@@ -4,13 +4,30 @@
 
 ### Option 1: Automated (Recommended)
 
-```bash
-# Start both backend and frontend
-./start-dev.sh
+First time only — create your local env file:
 
-# In another terminal, to stop:
-./stop-dev.sh
+```bash
+cp .env.local.example .env.local   # then edit if needed (git-ignored)
 ```
+
+Then start the stack with the AI provider you want. Each provider has its own
+start/stop pair:
+
+```bash
+./start-dev-ollama.sh   # local LLM — also boots Ollama + pulls the model
+./start-dev-openai.sh   # cloud OpenAI — needs OPENAI_API_KEY in .env.local
+./start-dev-fake.sh     # offline canned responses — fastest, best for UI work
+
+# stop (matching pair, or the generic one):
+./stop-dev-ollama.sh    ./stop-dev-openai.sh    ./stop-dev-fake.sh
+```
+
+`./start-dev.sh` / `./stop-dev.sh` still work — they use whatever `AI_PROVIDER`
+is set to in `.env.local`.
+
+All scripts source `.env.local` for configuration (provider URLs, model names,
+`OPENAI_API_KEY`, ports); the per-provider start script then forces its own
+`AI_PROVIDER`. The backend reads these via `app.ai.get_ai_provider()`.
 
 ### Option 2: Manual
 
@@ -71,9 +88,19 @@ VITE_API_URL=http://localhost:8000/api
 ```
 (Default is already configured in `vite.config.ts`)
 
-### Backend (env vars, optional)
+### Backend — `.env.local` (git-ignored, see `.env.local.example`)
 ```
-PYTHONUNBUFFERED=1  # Unbuffered Python output
+AI_PROVIDER=ollama            # ollama | openai | fake  (default for ./start-dev.sh)
+
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=mistral:7b
+
+OPENAI_API_KEY=               # required for AI_PROVIDER=openai
+OPENAI_MODEL=gpt-4o-mini
+# OPENAI_BASE_URL=            # optional proxy / Azure gateway
+
+BACKEND_PORT=8000
+FRONTEND_PORT=5173
 ```
 
 ---
@@ -128,6 +155,17 @@ npm run lint
 - Check backend is running: `curl http://localhost:8000/health`
 - Check CORS is enabled: Should see CORS headers in response
 - Check frontend is using correct API URL (should auto-proxy via Vite)
+
+### Ollama provider not working
+- Check the server: `curl http://localhost:11434/api/version`
+- Start it manually: `ollama serve` (or launch the Ollama.app menu-bar app)
+- List models: `ollama list` — pull if missing: `ollama pull mistral:7b`
+- `start-dev-ollama.sh` only stops Ollama on exit if it started it (tracked in
+  `.dev-ollama.pid`); the menu-bar app is left alone.
+
+### OpenAI provider fails immediately
+- `OPENAI_API_KEY` must be set in `.env.local`
+- Install the SDK: `cd backend && source venv/bin/activate && pip install -e .`
 
 ### Tests failing
 - Make sure you're in virtual environment: `source venv/bin/activate`

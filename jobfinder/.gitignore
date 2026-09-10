@@ -61,6 +61,11 @@ database.sqlite
 .env
 .env.local
 .env.*.local
+!.env.local.example
+
+# Dev script runtime files
+.dev-ollama.pid
+.dev-ollama.log
 
 # External data directory (canonical files)
 data/

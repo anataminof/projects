@@ -1,18 +1,16 @@
 #!/bin/bash
-# Stop the dev stack (backend + frontend). Also stops the Ollama server if
-# start-dev started it (tracked via .dev-ollama.pid).
+# Stop the dev stack started with the Fake provider.
 set -e
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/dev-lib.sh
 source "$ROOT/scripts/dev-lib.sh"
 
-echo "🛑 Stopping Job Search System services..."
+echo "🛑 Stopping Job Search System (Fake)..."
 echo ""
 
 load_env_local
 stop_stack
-stop_ollama
 
 echo ""
 ok "✅ All services stopped"
