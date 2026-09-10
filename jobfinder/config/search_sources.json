@@ -1,0 +1,38 @@
+[
+  {
+    "source_id": "greenhouse",
+    "name": "Greenhouse ATS",
+    "base_url": "https://{company_domain}.greenhouse.io",
+    "source_type": "ats",
+    "adapter": "greenhouse",
+    "enabled": true,
+    "priority": 1
+  },
+  {
+    "source_id": "lever",
+    "name": "Lever ATS",
+    "base_url": "https://jobs.lever.co/{company_name}",
+    "source_type": "ats",
+    "adapter": "lever",
+    "enabled": true,
+    "priority": 1
+  },
+  {
+    "source_id": "comeet",
+    "name": "Comeet ATS",
+    "base_url": "https://{company_name}.comeet.co",
+    "source_type": "ats",
+    "adapter": "comeet",
+    "enabled": true,
+    "priority": 1
+  },
+  {
+    "source_id": "generic_careers",
+    "name": "Generic Careers Page",
+    "base_url": "https://{company_domain}/careers",
+    "source_type": "careers",
+    "adapter": "generic",
+    "enabled": true,
+    "priority": 2
+  }
+]

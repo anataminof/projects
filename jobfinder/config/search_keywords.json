@@ -1,0 +1,44 @@
+[
+  {
+    "keyword_id": "kw_pm_en",
+    "keyword": "project manager",
+    "language": "en",
+    "role_families": ["pm_technical"],
+    "enabled": true
+  },
+  {
+    "keyword_id": "kw_pm_he",
+    "keyword": "מנהל פרויקטים",
+    "language": "he",
+    "role_families": ["pm_technical"],
+    "enabled": true
+  },
+  {
+    "keyword_id": "kw_tpm_en",
+    "keyword": "technical program manager",
+    "language": "en",
+    "role_families": ["tpm", "program_manager"],
+    "enabled": true
+  },
+  {
+    "keyword_id": "kw_tpm_he",
+    "keyword": "מנהל תוכנית טכני",
+    "language": "he",
+    "role_families": ["tpm", "program_manager"],
+    "enabled": true
+  },
+  {
+    "keyword_id": "kw_release_en",
+    "keyword": "release manager",
+    "language": "en",
+    "role_families": ["release_manager"],
+    "enabled": true
+  },
+  {
+    "keyword_id": "kw_release_he",
+    "keyword": "מנהל שחרור",
+    "language": "he",
+    "role_families": ["release_manager"],
+    "enabled": true
+  }
+]

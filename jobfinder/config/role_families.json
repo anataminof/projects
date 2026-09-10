@@ -1,0 +1,51 @@
+[
+  {
+    "family_id": "pm_technical",
+    "name": "Technical Project Manager",
+    "description": "Project Manager with technical/product flavor",
+    "enabled": true,
+    "keywords": ["project manager", "technical pm", "product pm"]
+  },
+  {
+    "family_id": "tpm",
+    "name": "TPM",
+    "description": "Technical Program Manager",
+    "enabled": true,
+    "keywords": ["tpm", "technical program manager"]
+  },
+  {
+    "family_id": "program_manager",
+    "name": "Program Manager",
+    "description": "Program Manager with technical flavor",
+    "enabled": true,
+    "keywords": ["program manager", "technical program manager"]
+  },
+  {
+    "family_id": "release_manager",
+    "name": "Release Manager",
+    "description": "Release Manager / Delivery Manager with technical flavor",
+    "enabled": true,
+    "keywords": ["release manager", "delivery manager", "technical delivery"]
+  },
+  {
+    "family_id": "r_d_operations",
+    "name": "R&D Operations",
+    "description": "Engineering/R&D Operations",
+    "enabled": true,
+    "keywords": ["r&d operations", "engineering operations", "devops operations"]
+  },
+  {
+    "family_id": "product_ops",
+    "name": "Product Operations",
+    "description": "Product Operations",
+    "enabled": true,
+    "keywords": ["product operations", "product ops"]
+  },
+  {
+    "family_id": "tech_product_manager",
+    "name": "Technical Product Manager",
+    "description": "Technical Product Manager",
+    "enabled": true,
+    "keywords": ["technical product manager", "tech pm"]
+  }
+]

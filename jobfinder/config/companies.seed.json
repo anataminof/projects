@@ -1,0 +1,26 @@
+[
+  {
+    "company_id": "company_001",
+    "name": "Wix",
+    "careers_url": "https://www.wix.com/en/careers",
+    "enabled": true,
+    "location": "Tel Aviv",
+    "notes": "Seed company for MVP testing"
+  },
+  {
+    "company_id": "company_002",
+    "name": "JFrog",
+    "careers_url": "https://careers.jfrog.com",
+    "enabled": true,
+    "location": "Tel Aviv",
+    "notes": "Seed company for MVP testing"
+  },
+  {
+    "company_id": "company_003",
+    "name": "SolarWinds (Israel)",
+    "careers_url": "https://careers.solarwinds.com",
+    "enabled": true,
+    "location": "Ramat Gan",
+    "notes": "Seed company for MVP testing"
+  }
+]
