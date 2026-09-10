@@ -7,6 +7,13 @@ from app.tasks.batch_manager import CompanyBatchManager
 from app.search.fetcher import WebFetcher
 from app.search.query_builder import QueryBuilder
 from app.dedup.normalize import normalize_company, normalize_job_id
+from app.ats.greenhouse import GreenhouseAdapter
+from app.ats.lever import LeverAdapter
+from app.ats.comeet import ComeetAdapter
+from app.ats.generic import GenericAdapter
+from app.ai.schemas import JobExtractionRequest, RelevanceCheckRequest
+from app.storage.models import Job
+from datetime import datetime
 
 
 class Task1Orchestrator:
@@ -105,15 +112,75 @@ class Task1Orchestrator:
             # Build search queries
             queries = await self.query_builder.build_queries(keywords, ai_expansion=True)
 
+            # Initialize ATS adapters (MVP: Greenhouse, Lever, Comeet, Generic)
+            adapters = [
+                GreenhouseAdapter(),
+                LeverAdapter(),
+                ComeetAdapter(),
+                GenericAdapter(),
+            ]
+
             # Search and fetch jobs
             jobs_found = 0
             duplicates = 0
             already_applied = 0
 
-            for query in queries:
-                # Search via ATS adapters (stub — real implementation in Phase 9)
-                # For now, just log the query
-                pass
+            # Try to extract jobs from company's careers page if available
+            if company.careers_url:
+                try:
+                    # Fetch careers page
+                    html = await fetcher.fetch(company.careers_url)
+                    if html:
+                        # Use GenericAdapter to extract jobs from HTML
+                        generic = GenericAdapter()
+                        extraction = await generic.extract(company.careers_url, company.name, self.context.ai_provider)
+
+                        if extraction:
+                            # Process the extracted job
+                            normalized_id = normalize_job_id(extraction.job_id or company.careers_url)
+
+                            if not self.context.dedup_engine.is_duplicate(normalized_id):
+                                if not self.context.application_gate.was_applied(
+                                    extraction.company or company.name,
+                                    extraction.title,
+                                    extraction.job_id or company.careers_url
+                                ):
+                                    # Check relevance
+                                    relevance = await self.context.ai_provider.check_relevance(
+                                        RelevanceCheckRequest(
+                                            job_title=extraction.title,
+                                            job_requirements=extraction.requirements,
+                                            candidate_profile=self.context.skills_profile.summary()
+                                        )
+                                    )
+
+                                    if relevance.is_relevant:
+                                        # Save job
+                                        job = Job(
+                                            job_id=normalized_id,
+                                            title=extraction.title,
+                                            company=extraction.company or company.name,
+                                            location=extraction.location,
+                                            work_model=extraction.work_model,
+                                            description=extraction.description,
+                                            requirements=extraction.requirements,
+                                            url=company.careers_url,
+                                            source="generic",
+                                            run_id=self.context.run_id,
+                                            fit_score=relevance.fit_score,
+                                            relevance_gaps=", ".join(relevance.gaps) if relevance.gaps else None,
+                                        )
+                                        self.context.job_repo.create(job)
+                                        self.context.dedup_engine.add_job(normalized_id)
+                                        jobs_found += 1
+                                    else:
+                                        pass  # Not relevant
+                                else:
+                                    already_applied += 1
+                            else:
+                                duplicates += 1
+                except Exception as e:
+                    print(f"Error processing {company.name}: {e}")
 
             # Record completion
             self.context.coverage_tracker.mark_completed(
@@ -132,8 +199,7 @@ class Task1Orchestrator:
         """
         Get search keywords for a company.
 
-        Phase 2 populated SearchKeyword with role families and keywords.
-        For MVP, return all enabled keywords (product will filter by role family later).
+        For MVP, return default keywords. Real implementation would load from config/DB.
 
         Args:
             company: Company model
@@ -141,6 +207,6 @@ class Task1Orchestrator:
         Returns:
             List of keywords to search
         """
-        # Stub: get keywords from config/DB
-        # Real implementation queries KeywordRepository
-        return []
+        # TODO: Load from config via ConfigLoader or database
+        # For now, return some default keywords for testing
+        return ["project manager", "technical program manager", "product manager"]
