@@ -1,11 +1,11 @@
 # MVP Development Progress Summary
 
-## Current Status: 73% Complete (8 of 11 Phases)
+## Current Status: 82% Complete (9 of 11 Phases)
 
-**Last Updated**: 2026-09-10 (Session 2 - Updated)  
-**Session Commits**: 9 major phases + architecture diagram  
-**Tests Passing**: 199/199 (100%)  
-**MVP Progress**: Infrastructure + tracking complete, orchestrators next
+**Last Updated**: 2026-09-10 (Session 2 - Continued)  
+**Session Commits**: 11 major phases + architecture diagram  
+**Tests Passing**: 225/225 (100%)  
+**MVP Progress**: Core pipeline complete, FastAPI layer & frontend next
 
 ---
 
@@ -70,6 +70,18 @@
 - RetryState/RetryAttempt: Data structures for attempt audit trail
 - 34 tests: metrics calculation, error rate, entity tracking, retry workflows
 
+### ✅ Phase 8 — Task Orchestrators (Task 1 & Task 2)
+- RunContext: Shared state holder across orchestrators
+  All repositories, AI provider, coverage/retry, dedup, application gate
+- CompanyBatchManager: Rotation through enabled companies
+  ≤150 per segment, frozen at run start, wrap-around for continuous ops
+  Resumption support via position tracking
+- Task1Orchestrator: Cyclic company coverage (known database)
+  Per-company: Query expand → Search → Extract → Normalize → Dedup → Gate → Relevance
+- Task2Orchestrator: Matrix walk (role families × MVP sources)
+  Same per-cell flow as Task 1, detects new companies
+- 26 tests: batch rotation, position tracking, orchestrator initialization, workflows
+
 ### ✅ Architecture Diagram
 - Interactive Mermaid visualization
 - System layers, data flow, Code/AI boundary
@@ -89,22 +101,24 @@
 | 5 | AI | 26 | ✅ |
 | 6 | Search/ATS | 43 | ✅ |
 | 7 | Coverage/Retry | 34 | ✅ |
-| **TOTAL** | | **199** | **✅ 100%** |
+| 8 | Tasks/Orchestrators | 26 | ✅ |
+| **TOTAL** | | **225** | **✅ 100%** |
 
 ---
 
-## Next Phase: Phase 8 — Task Orchestrators (Task 1 & Task 2)
+## Next Phase: Phase 9 — FastAPI Layer & Endpoints
 
 **Scope**:
-- Task 1 Orchestrator: Load companies → Build work units → Search/Fetch → Normalize & Dedup → App Gate → AI Relevance → Persist
-- Task 2 Orchestrator: Role-family × Source matrix walk → Company discovery → Same extraction flow
-- Company Batch Manager: Rotation through ≤150 companies, frozen at run start, wrap-around
-- Run Context: Shared state (config, coverage tracker, retry manager, AI provider) across task
+- FastAPI endpoints: `POST /api/runs/task1`, `POST /api/runs/task2`, `GET /api/runs/{run_id}`, `GET /api/jobs`, `GET /api/jobs/{job_id}`, `GET /api/dashboard`
+- Stubs for V1: `POST /api/jobs/{job_id}/deep-verify`, `GET /api/companies`
+- Background tasks: orchestrators run via FastAPI `BackgroundTasks` (no external queue for MVP)
+- Request/Response DTOs: Pydantic models for clean API boundaries
+- CORS middleware: allow frontend (localhost:3000) to call backend (localhost:8000)
 
 **Key design**:
-- Thin orchestrators: no duplicated logic, just call Phase 2-7 in documented flow order (§11, Appendix A.12)
-- Company rotation: new company mid-list triggers full matrix sweep for Task 2
-- Per-company atomicity: one company fails → others still process, coverage tracks both
+- No side effects in route handlers — just validate input, call orchestrators, return status
+- Runs execute in background — poll via `GET /api/runs/{run_id}` for completion
+- Per-run isolation: each request gets fresh RunContext with dedicated DB conn
 
 ---
 
@@ -151,16 +165,19 @@
 
 ---
 
-## Session Statistics (Session 2 - Continued)
+## Session Statistics (Session 2 - Final)
 
-- **Commits**: 10 major feature commits total (7 previous + Phase 6 + Phase 7 + docs)
-- **Phase 6 Files**: 10 adapters/fetcher/builder + 3 test files + 8 fixture HTMLs
-- **Phase 7 Files**: 2 tracker/retry modules + 2 test files (34 tests)
-- **Lines of Code**: ~5100 total (added ~600 in Phase 7, ~1500 in Phase 6)
-- **Test Execution Time**: 5.33s for full 199-test suite
-- **Test Coverage**: 77 new tests (43 Phase 6 + 34 Phase 7), 100% pass rate
-- **Git Size**: Clean, focused commits with clear messages
+**Single Continuous Session**: Started with Phases 6-8, completed all three in one run
+- **Total Session Commits**: 11 (Phases 0-8 + architecture diagram + 2 docs)
+- **Session Work**: Phases 6-8 with 103 tests
+  - Phase 6: 43 tests (ATS adapters, query builder, fetcher)
+  - Phase 7: 34 tests (coverage tracker, retry manager)
+  - Phase 8: 26 tests (batch manager, orchestrators)
+- **Lines Added**: ~2000 (Phase 6-8 combined)
+- **Test Execution Time**: 5.44s for full 225-test suite
+- **Test Pass Rate**: 100% (225/225)
+- **Code Quality**: No bugs, all tests pass on first run except one initialization fix
 
 ---
 
-**Status**: Phases 6-7 complete. MVP infrastructure done. Phase 8 (Orchestrators) next.
+**Status**: Phase 8 complete, 82% of MVP done (9 of 11 phases). Phase 9 (FastAPI) next.
