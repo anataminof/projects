@@ -1,0 +1,231 @@
+<html>
+<head>
+<title>Job Search System Architecture</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: #f5f5f5;
+}
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+h1 {
+  color: #333;
+  margin-top: 0;
+}
+.diagram-section {
+  margin: 20px 0;
+}
+.explanation {
+  background: #f9f9f9;
+  border-left: 4px solid #646cff;
+  padding: 15px;
+  margin-top: 20px;
+  border-radius: 4px;
+}
+.explanation h3 {
+  margin-top: 0;
+  color: #646cff;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🏗️ Job Search System Architecture</h1>
+
+<div class="diagram-section">
+<h2>System Layers & Components</h2>
+<div class="mermaid">
+graph TB
+    subgraph UI["🎨 Frontend Layer"]
+        React["React + TypeScript + Vite<br/>(Dashboard, Jobs, Run Details)"]
+    end
+
+    subgraph API["🔌 API Layer"]
+        FastAPI["FastAPI<br/>(REST endpoints:<br/>POST /api/runs/task1,2<br/>GET /api/jobs, /api/dashboard)"]
+    end
+
+    subgraph Core["⚙️ Core Backend Services"]
+        Task1["Task 1<br/>(Tech Companies<br/>Cyclic Coverage)"]
+        Task2["Task 2<br/>(Open Web<br/>Discovery)"]
+        Dedup["Dedup Engine<br/>(Normalization<br/>Role Key<br/>Mirror Merge)"]
+        AppGate["Application Gate<br/>(Has Been Applied?<br/>Check Excel)"]
+        AI["AIProvider<br/>(Local Ollama)"]
+    end
+
+    subgraph Search["🔍 Search/Fetch Layer"]
+        QueryBuilder["Search Query Builder<br/>(Code + AI)"]
+        Fetcher["Web/ATS Fetcher<br/>(Playwright<br/>httpx<br/>BeautifulSoup)"]
+        Adapters["ATS Adapters<br/>(Greenhouse<br/>Lever<br/>Comeet<br/>Generic)"]
+    end
+
+    subgraph Storage["💾 Storage & Data"]
+        SQLite["SQLite Database<br/>(Job, Run, Company<br/>ApplicationStatus<br/>Coverage)"]
+        ExcelIO["Excel I/O<br/>(job_applications_master.xlsx<br/>skills profile)"]
+        Config["Config Files<br/>(companies.seed.json<br/>role_families.json<br/>keywords)"]
+        Ledger["Discovery Ledger<br/>(First Found<br/>Verified Status)"]
+    end
+
+    subgraph External["🌐 External Services"]
+        Ollama["Ollama<br/>(Local LLM<br/>for AI tasks)"]
+        JobSites["Job Sites<br/>(Greenhouse<br/>Lever<br/>Comeet<br/>Company Sites)"]
+    end
+
+    React -->|REST API| FastAPI
+    FastAPI -->|Orchestrate| Task1
+    FastAPI -->|Orchestrate| Task2
+
+    Task1 -->|Use| QueryBuilder
+    Task2 -->|Use| QueryBuilder
+    QueryBuilder -->|Fetch| Fetcher
+    Fetcher -->|Parse| Adapters
+    Adapters -->|Extract Jobs| Dedup
+
+    Dedup -->|Normalize| AppGate
+    AppGate -->|Check History| ExcelIO
+    AppGate -->|Check History| SQLite
+
+    Dedup -->|Analyze| AI
+    AI -->|Call| Ollama
+
+    Task1 -->|Store Results| SQLite
+    Task2 -->|Store Results| SQLite
+    Dedup -->|Track Jobs| Ledger
+
+    SQLite -->|Load Config| Config
+    ExcelIO -->|Load| Config
+
+    Fetcher -->|Scrape| JobSites
+
+    style React fill:#e1f5ff
+    style FastAPI fill:#fff3e0
+    style Task1 fill:#f3e5f5
+    style Task2 fill:#f3e5f5
+    style SQLite fill:#e8f5e9
+    style Ollama fill:#ffe0b2
+    style JobSites fill:#ffebee
+</div>
+</div>
+
+<div class="diagram-section">
+<h2>Data Flow: Single Task Run</h2>
+<div class="mermaid">
+graph LR
+    Start["▶️ Task 1/2<br/>Started"]
+    LoadConfig["📋 Load Config<br/>(Companies,<br/>Keywords)"]
+    BuildUnits["🔨 Build Work Units<br/>(Batch of<br/>Companies or<br/>Search Cells)"]
+    Search["🔍 Search/Fetch<br/>(Query ATS<br/>Careers Pages)"]
+    Extract["🤖 AI Extract<br/>(Page → Job<br/>Structure)"]
+    Normalize["🔧 Normalize<br/>(Company/Title/<br/>Location/URL)"]
+    Dedup["🔀 Dedup<br/>(Merge Mirrors<br/>Via role_key)"]
+    CheckApps["✓ Application Gate<br/>(Already Applied?)"]
+    Relevance["🤖 AI Relevance<br/>(Fit Score<br/>Gaps)"]
+    Persist["💾 Persist<br/>(SQLite +<br/>Ledger)"]
+    Report["📊 Report<br/>(Coverage<br/>Summary)"]
+
+    Start --> LoadConfig
+    LoadConfig --> BuildUnits
+    BuildUnits --> Search
+    Search --> Extract
+    Extract --> Normalize
+    Normalize --> Dedup
+    Dedup --> CheckApps
+    CheckApps --> Relevance
+    Relevance --> Persist
+    Persist --> Report
+
+    style Start fill:#e8f5e9
+    style LoadConfig fill:#fff3e0
+    style Search fill:#e3f2fd
+    style Extract fill:#f3e5f5
+    style Normalize fill:#fce4ec
+    style Dedup fill:#fce4ec
+    style CheckApps fill:#fff3e0
+    style Relevance fill:#f3e5f5
+    style Persist fill:#e8f5e9
+    style Report fill:#e0f2f1
+</div>
+</div>
+
+<div class="diagram-section">
+<h2>Code/AI Boundary (Per Spec)</h2>
+<div class="mermaid">
+graph TB
+    subgraph CODE["🔐 Deterministic Code<br/>(State, Persistence, Logic)"]
+        C1["Scheduler<br/>Orchestrator"]
+        C2["Config Loader"]
+        C3["Company Batch<br/>Manager"]
+        C4["Web/ATS Fetcher<br/>(HTTP/Pagination)"]
+        C5["Normalization<br/>Role Key"]
+        C6["Dedup Engine"]
+        C7["Application Gate<br/>(Strong Match)"]
+        C8["Coverage Tracking<br/>Retry Logic"]
+        C9["Report Generator<br/>(Format)"]
+        C10["Discovery Ledger"]
+    end
+
+    subgraph AISTUB["🔗 Code ↔ AI Interface<br/>(Structured Input/Output)"]
+        I1["Search Query<br/>Builder"]
+        I2["Page<br/>Understanding"]
+        I3["Official-source<br/>Resolution"]
+        I4["Report<br/>Generator"]
+    end
+
+    subgraph AI["🤖 Pure AI<br/>(Semantic Decisions)"]
+        A1["Query Expansion<br/>(Keywords →<br/>Variations)"]
+        A2["Job Extractor<br/>(Page →<br/>Structured Data)"]
+        A3["Relevance &<br/>Fit Analysis"]
+        A4["Ambiguity<br/>Resolver"]
+    end
+
+    C1 --> C2
+    C2 --> C3
+    C3 --> C4
+    C4 --> C5
+    C5 --> C6
+    C6 --> C7
+    C7 --> C8
+    C8 --> C10
+    C10 --> C9
+
+    I1 -.->|Input: keywords| A1
+    A1 -.->|Output: JSON array| I1
+
+    I2 -.->|Input: page HTML| A2
+    A2 -.->|Output: JSON schema| I2
+
+    I3 -.->|Input: job + mirrors| A4
+    A4 -.->|Output: JSON decision| I3
+
+    I4 -.->|Input: fit data| A3
+    A3 -.->|Output: JSON analysis| I4
+
+    style CODE fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style AISTUB fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style AI fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+</div>
+</div>
+
+<div class="explanation">
+<h3>📚 Architecture Principles</h3>
+<ul>
+<li><strong>Client-Server Separation:</strong> React only calls FastAPI, never directly accesses jobs sites, Excel, or AI</li>
+<li><strong>Centralized Data Model:</strong> Job, Run, ApplicationStatus defined once in Phase 1, used everywhere</li>
+<li><strong>Code/AI Boundary:</strong> Code owns state/persistence/retries/coverage; AI only invoked for well-defined work units with structured schemas</li>
+<li><strong>Shared Services:</strong> Dedup, Application Gate, Coverage used by both Task 1 and Task 2</li>
+<li><strong>MVP Scope:</strong> Greenhouse, Lever, Comeet, Generic adapters only; broader sources deferred to V1</li>
+<li><strong>DATA_DIR Pattern:</strong> External canonical files (Excel, markdown) loaded via environment variable</li>
+</ul>
+</div>
+
+</div>
+</body>
+</html>
